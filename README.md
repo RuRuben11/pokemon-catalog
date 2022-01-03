@@ -11,7 +11,12 @@ Some libraries are needed in order to run this functions. You can find them in c
 
 The functions that have been generated to date are:
 
+````
 plotPokemonCard(mon)
+
 plotEvoLine(chain)
+
 ProfessorOak()
+
 ChampionTeam()
+````
