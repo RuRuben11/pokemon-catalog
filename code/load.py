@@ -1,5 +1,57 @@
 #!/usr/bin/env python3
 
+from PIL import Image, ImageDraw, ImageFont, ImageOps
+from io import BytesIO
+from colour import Color
+from scipy import stats
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
+import urllib.request
+import requests
+import pandas as pd
+import numpy as np
+import math
+import io
+import random
+
+#Extract and edit data from PokeAPI
+pokemon_url = 'https://raw.githubusercontent.com/PokeAPI/pokeapi/master/data/v2/csv/pokemon.csv'
+pokemon_species_url = 'https://raw.githubusercontent.com/PokeAPI/pokeapi/master/data/v2/csv/pokemon_species.csv'
+pokemon_types_url = 'https://raw.githubusercontent.com/PokeAPI/pokeapi/master/data/v2/csv/pokemon_types.csv'
+pokemon_species_names_url = 'https://raw.githubusercontent.com/PokeAPI/pokeapi/master/data/v2/csv/pokemon_species_names.csv'
+pokemon_forms_url = 'https://raw.githubusercontent.com/PokeAPI/pokeapi/master/data/v2/csv/pokemon_forms.csv'
+pokemon_evolutions_url = 'https://raw.githubusercontent.com/PokeAPI/pokeapi/master/data/v2/csv/pokemon_evolution.csv'
+pokemon_stats_url = 'https://raw.githubusercontent.com/PokeAPI/pokeapi/master/data/v2/csv/pokemon_stats.csv'
+move_names_url = 'https://raw.githubusercontent.com/PokeAPI/pokeapi/master/data/v2/csv/move_names.csv'
+
+pokemon = pd.read_csv(pokemon_url)
+pokemon_species = pd.read_csv(pokemon_species_url)
+pokemon_types = pd.read_csv(pokemon_types_url)
+pokemon_species_names = pd.read_csv(pokemon_species_names_url)
+pokemon_forms = pd.read_csv(pokemon_forms_url)
+pokemon_evolutions  = pd.read_csv(pokemon_evolutions_url)
+pokemon_stats = pd.read_csv(pokemon_stats_url)
+move_names = pd.read_csv(move_names_url)
+
+pokemon_species_names_esp = pokemon_species_names[pokemon_species_names["local_language_id"] == 7]
+move_names_esp = move_names[move_names["local_language_id"] == 7]
+pokemon_species_names_esp["genus2"] = pokemon_species_names_esp["genus"].str.replace("Pokémon ", "").values
+pokemon_species_names_esp['name'] = pokemon_species_names_esp['name'].replace({'\u2640':''}, regex=True)
+pokemon_species_names_esp['name'] = pokemon_species_names_esp['name'].replace({'\u2642':''}, regex=True)
+
+pokemon_forms.loc[pokemon_forms["form_identifier"] == "mega-x", "form_identifier"] = "mega"
+pokemon_forms.loc[pokemon_forms["form_identifier"] == "mega-y", "form_identifier"] = "mega"
+pokemon_forms.loc[pokemon_forms["form_identifier"] == "eternamax", "form_identifier"] = "gmax"
+
+#Define fonts
+font_name = ImageFont.truetype("resources/fonts/Flexo-Medium.ttf", 32)
+font_desc = ImageFont.truetype("resources/fonts/Flexo-Medium.ttf", 20)
+font_num = ImageFont.truetype("resources/fonts/Meslo_LG_S_Regular_400.ttf", 36)
+font_data = ImageFont.truetype("resources/fonts/Flexo-Medium.ttf", 18)
+font_data2 = ImageFont.truetype("resources/fonts/Flexo-Bold.ttf", 18)
+
+
+
 #Functions
 
 def all_same(items):
@@ -18,7 +70,7 @@ def ImageLocal(directory, size_x, size_y):
 
 
 
-def plotPokemonCard(mon):
+def plotPokemonCard(mon, output=''):
     img =ImageURL("https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/"+str(mon)+".png",400,400)
     n_types=len(pokemon_types[pokemon_types["pokemon_id"] == mon])
     type1_pkmn=pokemon_types[(pokemon_types["slot"] == 1) & (pokemon_types["pokemon_id"] == mon)].type_id.values.astype(int)[0]
@@ -115,7 +167,7 @@ def plotPokemonCard(mon):
             img4=ImageURL('https://archives.bulbagarden.net/media/upload/9/9f/Dynamax_icon.png',30,23)
             im.paste(img4,(285,89), img4)
     
-    return im
+    im.save(output+"pokemon_"+str(mon)+".png")
 
 def generateEvoMatrix(chain):
     test = pokemon_species[pokemon_species["evolution_chain_id"] == chain]
@@ -124,23 +176,27 @@ def generateEvoMatrix(chain):
         nrow_evo=1
     ncol_evo = len(test)
     matrix = np.zeros((nrow_evo,ncol_evo))
-    matrix[:,0] = test[test["evolves_from_species_id"].isna()].id.values[0]
-    all_evos = test["id"].values
-    x,y =0,0
-    if len(matrix[0]) > 1:
-        for x in range(len(matrix)):
-            y=0
-            while matrix[x,y] in test.evolves_from_species_id.values:
-                present_evos = test[test["evolves_from_species_id"] == matrix[x:,y][0]].id.values
-                matrix[x,y+1] = np.array(list(set(present_evos) & set(all_evos)))[0]
-                if len(test[test["evolves_from_species_id"] == present_evos[0]]) <= 1:        
-                    all_evos = all_evos[all_evos != matrix[x,y+1]]
-                y+=1
-    matrix = matrix.astype(int)
-    evo_matrix = matrix.tolist()
-    for x in range(len(evo_matrix)):
-        evo_matrix[x] = [i for i in evo_matrix[x] if i != 0]
+    if len(test[test["evolves_from_species_id"].isna()].id) == 1:
+        matrix[:,0] = test[test["evolves_from_species_id"].isna()].id.values[0]
+        all_evos = test["id"].values
+        x,y =0,0
+        if len(matrix[0]) > 1:
+            for x in range(len(matrix)):
+                y=0
+                while matrix[x,y] in test.evolves_from_species_id.values:
+                    present_evos = test[test["evolves_from_species_id"] == matrix[x:,y][0]].id.values
+                    matrix[x,y+1] = np.array(list(set(present_evos) & set(all_evos)))[0]
+                    if len(test[test["evolves_from_species_id"] == present_evos[0]]) <= 1:        
+                        all_evos = all_evos[all_evos != matrix[x,y+1]]
+                    y+=1
+        matrix = matrix.astype(int)
+        evo_matrix = matrix.tolist()
+        for x in range(len(evo_matrix)):
+            evo_matrix[x] = [i for i in evo_matrix[x] if i != 0]
+    else:
+        evo_matrix = [test[test["evolves_from_species_id"].isna()].id.tolist()]
     return evo_matrix
+
 
 def generateEvoImages(evo_matrix):
     evo_image = [[] for _ in range(len(evo_matrix))]
@@ -157,7 +213,10 @@ def generateEvoMechanism(evo_matrix):
         for x in range(len(evo_matrix)):
             y=0
             for a in evo_matrix[x][:(len(evo_matrix[0])-1)]:
-                evo_mech[x].append(pokemon_evolutions[pokemon_evolutions["evolved_species_id"] == evo_matrix[x][y+1]].evolution_trigger_id.values[0])
+                if evo_matrix[x][y+1] in pokemon_evolutions["evolved_species_id"].unique():
+                    evo_mech[x].append(pokemon_evolutions[pokemon_evolutions["evolved_species_id"] == evo_matrix[x][y+1]].evolution_trigger_id.values[0])
+                else:
+                    evo_mech[x].append(0)
                 y+=1
     return evo_mech
 
@@ -183,7 +242,7 @@ def generateEvoData(evo_matrix, evo_mech):
                     elif np.isfinite(pokemon_evolutions[pokemon_evolutions["evolved_species_id"] == evo_matrix[x][y+1]].known_move_id.values[0]):
                         evo_move=int(pokemon_evolutions[pokemon_evolutions["evolved_species_id"] == evo_matrix[x][y+1]].known_move_id.values[0])
                         ataque=move_names_esp[move_names_esp["move_id"]==evo_move].name.values[0]
-                        evo_text[x].append('MT: '+ataque)
+                        evo_text[x].append(ataque)
                         evo_object[x].append(ImageLocal('resources/items/item_50.png', 44,44))
                     elif np.isfinite(pokemon_evolutions[pokemon_evolutions["evolved_species_id"] == evo_matrix[x][y+1]].known_move_type_id.values[0]):
                         evo_move=int(pokemon_evolutions[pokemon_evolutions["evolved_species_id"] == evo_matrix[x][y+1]].known_move_type_id.values[0])
@@ -196,15 +255,18 @@ def generateEvoData(evo_matrix, evo_mech):
                     elif np.isfinite(pokemon_evolutions[pokemon_evolutions["evolved_species_id"] == evo_matrix[x][y+1]].party_species_id.values[0]):
                         party = pokemon_evolutions[pokemon_evolutions["evolved_species_id"] == evo_matrix[x][y+1]].party_species_id.values[0]
                         evo_text[x].append('Subir nivel')
-                        evo_object[x].append(ImageURL('https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/'+ str(int(party)) +'.png', 44,44))                
+                        evo_object[x].append(ImageURL("https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/"+str(int(party))+".png", 44,44))                
                     elif np.isfinite(pokemon_evolutions[pokemon_evolutions["evolved_species_id"] == evo_matrix[x][y+1]].location_id.values[0]):
                         evo_object[x].append(ImageLocal("resources/items/item_50.png", 44,44))
                         if pokemon_evolutions[pokemon_evolutions["evolved_species_id"] == evo_matrix[x][y+1]].location_id.values[0] in (10,379,629):
-                            evo_text[x].append('Campo magnético')
+                            evo_text[x].append('Campo magn.')
                         elif pokemon_evolutions[pokemon_evolutions["evolved_species_id"] == evo_matrix[x][y+1]].location_id.values[0] in (8,375,650):
                             evo_text[x].append('Roca musgo')
                         elif pokemon_evolutions[pokemon_evolutions["evolved_species_id"] == evo_matrix[x][y+1]].location_id.values[0] in (48,380,640,775):
                             evo_text[x].append('Roca hielo')
+                    else:
+                        evo_text[x].append('Campo magn.')
+                        evo_object[x].append(ImageLocal("resources/items/item_50.png", 44,44))
                 elif a == 2:
                     evo_text[x].append('Intercambio')
                     if pokemon_evolutions[pokemon_evolutions["evolved_species_id"] == evo_matrix[x][y+1]].held_item_id.notna().values[0]:
@@ -212,13 +274,16 @@ def generateEvoData(evo_matrix, evo_mech):
                         evo_object[x].append(ImageLocal('resources/items/item_'+ evo_item +'.png', 44,44))
                     elif pokemon_evolutions[pokemon_evolutions["evolved_species_id"] == evo_matrix[x][y+1]].trade_species_id.notna().values[0]:
                         evo_species=str(int(pokemon_evolutions[pokemon_evolutions["evolved_species_id"] == evo_matrix[x][y+1]].trade_species_id.values[0]))
-                        evo_object[x].append(ImageURL('https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/'+ evo_species +'.png', 44,44))                     
+                        evo_object[x].append(ImageURL('https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/'+ evo_species +'.png', 44,44))                     
                     else:
                         evo_object[x].append(ImageURL('https://cdn-icons-png.flaticon.com/512/103/103588.png',44,44))
                 elif a == 3:
                     evo_text[x].append('Objeto')
-                    evo_item=str(int(pokemon_evolutions[pokemon_evolutions["evolved_species_id"] == evo_matrix[x][y+1]].trigger_item_id.values[0]))
-                    evo_object[x].append(ImageLocal('resources/items/item_'+ evo_item +'.png', 44,44))
+                    if np.isnan(pokemon_evolutions[pokemon_evolutions["evolved_species_id"] == evo_matrix[x][y+1]].trigger_item_id.values[0]):
+                        evo_object[x].append(Image.new('RGBA', (44,44)))
+                    else:
+                        evo_item=str(int(pokemon_evolutions[pokemon_evolutions["evolved_species_id"] == evo_matrix[x][y+1]].trigger_item_id.values[0]))
+                        evo_object[x].append(ImageLocal('resources/items/item_'+ evo_item +'.png', 44,44))
                 elif a == 4:
                     evo_text[x].append('Espacio')
                     evo_object[x].append(ImageLocal('resources/items/item_4.png', 44,44))
@@ -234,7 +299,7 @@ def generateEvoData(evo_matrix, evo_mech):
                         evo_object[x].append(ImageLocal('resources/items/item_1167.png', 44,44))
                     elif evo_matrix[x][y+1] == 892:
                         evo_text[x].append('Torre DLC')
-                        evo_object[x].append(ImageURL('https://cdn-icons-png.flaticon.com/512/463/463574.png', 44,44))             
+                        evo_object[x].append(ImageURL('https://cdn-icons-png.flaticon.com/512/463/463574.png', 44,44))            
                 y+=1
     return evo_text, evo_object
 
@@ -244,16 +309,19 @@ def generateEvoData2(evo_matrix, evo_mech):
         for x in range(len(evo_matrix)):
             y=0
             for a in evo_mech[x]:
-                if pokemon_evolutions[pokemon_evolutions["evolved_species_id"] == evo_matrix[x][y+1]].gender_id.values[0] == 1:
-                    evo_append[x].append(ImageLocal('resources/other/female.png',44,44))
-                elif pokemon_evolutions[pokemon_evolutions["evolved_species_id"] == evo_matrix[x][y+1]].gender_id.values[0] == 2:
-                    evo_append[x].append(ImageLocal('resources/other/male.png',44,44))
-                elif pokemon_evolutions[pokemon_evolutions["evolved_species_id"] == evo_matrix[x][y+1]].time_of_day.values[0] == 'night':
-                    evo_append[x].append(ImageLocal('resources/other/moon.png',44,44))
-                elif pokemon_evolutions[pokemon_evolutions["evolved_species_id"] == evo_matrix[x][y+1]].time_of_day.values[0] == 'day':
-                    evo_append[x].append(ImageLocal('resources/other/sun.png',44,44))
-                elif pokemon_evolutions[pokemon_evolutions["evolved_species_id"] == evo_matrix[x][y+1]].needs_overworld_rain.values[0] == 1:
-                    evo_append[x].append(ImageLocal('resources/other/rain.png',44,44))
+                if evo_matrix[x][y+1] in pokemon_evolutions["evolved_species_id"].unique():
+                    if pokemon_evolutions[pokemon_evolutions["evolved_species_id"] == evo_matrix[x][y+1]].gender_id.values[0] == 1:
+                        evo_append[x].append(ImageLocal('resources/other/female.png',44,44))
+                    elif pokemon_evolutions[pokemon_evolutions["evolved_species_id"] == evo_matrix[x][y+1]].gender_id.values[0] == 2:
+                        evo_append[x].append(ImageLocal('resources/other/male.png',44,44))
+                    elif pokemon_evolutions[pokemon_evolutions["evolved_species_id"] == evo_matrix[x][y+1]].time_of_day.values[0] == 'night':
+                        evo_append[x].append(ImageLocal('resources/other/moon.png',44,44))
+                    elif pokemon_evolutions[pokemon_evolutions["evolved_species_id"] == evo_matrix[x][y+1]].time_of_day.values[0] == 'day':
+                        evo_append[x].append(ImageLocal('resources/other/sun.png',44,44))
+                    elif pokemon_evolutions[pokemon_evolutions["evolved_species_id"] == evo_matrix[x][y+1]].needs_overworld_rain.values[0] == 1:
+                        evo_append[x].append(ImageLocal('resources/other/rain.png',44,44))
+                    else:
+                        evo_append[x].append(Image.new('RGBA', (44,44)))
                 else:
                     evo_append[x].append(Image.new('RGBA', (44,44)))
                 y+=1
@@ -291,14 +359,45 @@ def generateEvoPlot(evo_matrix, evo_image, evo_text, evo_object, evo_append):
                 y+=1
     return im
 
-def plotEvoLine(chain):
+def plotEvoLine(chain, output=''):
     evo_matrix = generateEvoMatrix(chain)
     evo_image = generateEvoImages(evo_matrix)
     evo_mech = generateEvoMechanism(evo_matrix)
     evo_text, evo_object= generateEvoData(evo_matrix, evo_mech)
     evo_append = generateEvoData2(evo_matrix, evo_mech)
     image = generateEvoPlot(evo_matrix, evo_image, evo_text, evo_object, evo_append)
-    return image
+    image.save(output+"evochain_"+str(chain)+".png")
+
+
+def ProfessorOak(n_starters = 3, output = ''):
+    starter_forms = list(pokemon_species[(np.isnan(pokemon_species["evolves_from_species_id"])) & (pokemon_species["is_legendary"]==0) & (pokemon_species["is_mythical"]==0)].id.values)
+    options = random.sample(starter_forms,n_starters)
+    options.sort()
+    with Image.new('RGBA', ((550*len(options)-150, 775))) as im:
+        draw = ImageDraw.Draw(im)
+        for x in range(len(options)):
+            im.paste(Image.open('results/pokemon/pokemon_'+str(int(options[x]))+'.png'), (0+(550*x), 0))
+            draw.rectangle((20, 660, 550*len(options)-170, 755), fill='white', width = 2, outline="black")
+            draw.rectangle((25, 665, 550*len(options)-175, 750), fill='white', width = 2, outline="black")
+            draw.text(((550*len(options)-150)/2-157,692), 'Escoge tu Pokémon...', fill = "black", font = font_name)
+    im.save(output + 'ProfessorOak.png')
+
+def ChampionTeam(output = ''):
+    a = set(pokemon_species["evolves_from_species_id"].values).symmetric_difference(set(pokemon_species["id"].values))
+    a = {x for x in a if x==x}
+    options = random.sample(a,6)
+    with Image.new('RGBA', (int(550*(len(options)/2)-150), 1405)) as im:
+        draw = ImageDraw.Draw(im)
+        draw.rectangle((20, 660+630, int(550*(len(options)/2)-170), 755+630), fill='white', width = 2, outline="black")
+        draw.rectangle((25, 665+630, int(550*(len(options)/2)-175), 750+630), fill='white', width = 2, outline="black")
+        draw.text(((int(550*3)/2-300,692+630)), 'Bienvenido al Salón de la Fama!', fill = "black", font = font_name)
+        y=0
+        for x in range(3):
+            im.paste(Image.open('results/pokemon/pokemon_'+str(int(options[x]))+'.png'), (0+(550*x), 0))
+        for x in range(3,6):
+            im.paste(Image.open('results/pokemon/pokemon_'+str(int(options[x]))+'.png'), (0+(550*y), 630))
+            y+=1
+    im.save(output+'ChampionTeam.png')
 
 
 #Types dictionary
