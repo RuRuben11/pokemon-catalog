@@ -23,6 +23,7 @@ pokemon_forms_url = 'https://raw.githubusercontent.com/PokeAPI/pokeapi/master/da
 pokemon_evolutions_url = 'https://raw.githubusercontent.com/PokeAPI/pokeapi/master/data/v2/csv/pokemon_evolution.csv'
 pokemon_stats_url = 'https://raw.githubusercontent.com/PokeAPI/pokeapi/master/data/v2/csv/pokemon_stats.csv'
 move_names_url = 'https://raw.githubusercontent.com/PokeAPI/pokeapi/master/data/v2/csv/move_names.csv'
+pokemon_form_names_url='https://raw.githubusercontent.com/PokeAPI/pokeapi/master/data/v2/csv/pokemon_form_names.csv'
 
 pokemon = pd.read_csv(pokemon_url)
 pokemon_species = pd.read_csv(pokemon_species_url)
@@ -32,9 +33,11 @@ pokemon_forms = pd.read_csv(pokemon_forms_url)
 pokemon_evolutions  = pd.read_csv(pokemon_evolutions_url)
 pokemon_stats = pd.read_csv(pokemon_stats_url)
 move_names = pd.read_csv(move_names_url)
+pokemon_form_names = pd.read_csv(pokemon_form_names_url)
 
 pokemon_species_names_esp = pokemon_species_names[pokemon_species_names["local_language_id"] == 7]
 move_names_esp = move_names[move_names["local_language_id"] == 7]
+pokemon_form_names_esp = pokemon_form_names[pokemon_form_names["local_language_id"] == 7]
 pokemon_species_names_esp["genus2"] = pokemon_species_names_esp["genus"].str.replace("Pokémon ", "").values
 pokemon_species_names_esp['name'] = pokemon_species_names_esp['name'].replace({'\u2640':''}, regex=True)
 pokemon_species_names_esp['name'] = pokemon_species_names_esp['name'].replace({'\u2642':''}, regex=True)
@@ -70,7 +73,13 @@ def ImageLocal(directory, size_x, size_y):
 
 
 
-def plotPokemonCard(mon, output=''):
+def plotPokemonCard(mon, form = 'default',output=''):
+    id_mon = mon
+    if form != 'default':
+        mon=pokemon[(pokemon['species_id']==mon) & pokemon['identifier'].str.contains(form)].id.values[0]
+        form_mon = pokemon_forms[pokemon_forms["pokemon_id"] == mon].id.values[0]
+
+    
     img =ImageURL("https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/"+str(mon)+".png",400,400)
     n_types=len(pokemon_types[pokemon_types["pokemon_id"] == mon])
     type1_pkmn=pokemon_types[(pokemon_types["slot"] == 1) & (pokemon_types["pokemon_id"] == mon)].type_id.values.astype(int)[0]
@@ -107,9 +116,15 @@ def plotPokemonCard(mon, output=''):
         draw.rectangle((38, 535, 362, 565), fill=types[type1_pkmn]['color_light'])
         draw.line(((38,565),(362,565)), fill =types[type1_pkmn]['color_dark'], width = 4)
         draw.ellipse((35, 10, 125, 100), fill = types[type1_pkmn]['color'], outline ='black',width=4)
-        draw.text((135,21), pokemon_species_names_esp[(pokemon_species_names_esp["pokemon_species_id"] == mon)].name.values.astype(str)[0].astype('U'), fill = "black", font = font_name)
-        draw.text((135,70), pokemon_species_names_esp[(pokemon_species_names_esp["pokemon_species_id"] == mon)].genus2.values.astype(str)[0].astype('U'), fill = "white", font = font_desc)
-        draw.text((48,33), str(mon).zfill(3), fill = "white", font = font_num)
+        draw.text((135,21), pokemon_species_names_esp[(pokemon_species_names_esp["pokemon_species_id"] == id_mon)].name.values.astype(str)[0].astype('U'), fill = "black", font = font_name)
+        if form == 'default':
+            draw.text((135,70), pokemon_species_names_esp[(pokemon_species_names_esp["pokemon_species_id"] == id_mon)].genus2.values.astype(str)[0].astype('U'), fill = "white", font = font_desc)
+        else:
+            if form != 'galar':
+                draw.text((135,70), pokemon_form_names_esp[(pokemon_form_names_esp["pokemon_form_id"] == form_mon)].form_name.values.astype(str)[0].astype('U'), fill = "white", font = font_desc)
+            else:
+                draw.text((135,70), 'Forma de Galar', fill = "white", font = font_desc)
+        draw.text((48,33), str(id_mon).zfill(3), fill = "white", font = font_num)
         
         alt = str(round(pokemon[(pokemon["id"] == mon)].height.values[0]*0.1,1))+' m'
         w, h = draw.textsize(alt, font = font_data2)
@@ -166,8 +181,10 @@ def plotPokemonCard(mon, output=''):
         if 'gmax' in pokemon_forms[pokemon_forms["pokemon_id"].isin(pokemon[pokemon["species_id"] == mon].id.values)].form_identifier.values:
             img4=ImageURL('https://archives.bulbagarden.net/media/upload/9/9f/Dynamax_icon.png',30,23)
             im.paste(img4,(285,89), img4)
-    
-    im.save(output+"pokemon_"+str(mon)+".png")
+    if form != 'default':
+        im.save(output+"pokemon_"+str(id_mon)+"-"+ str(form)+".png")
+    else:
+        im.save(output+"pokemon_"+str(id_mon)+".png")
 
 def generateEvoMatrix(chain):
     test = pokemon_species[pokemon_species["evolution_chain_id"] == chain]

@@ -1,7 +1,7 @@
 exec(open('code/load.py').read())
 
 #Generate individual figures for default Pokemons
-plotPokemonCard(pkmn)
+plotPokemonCard(pkmn, form = 'default')
 
 #Generate evolutionary line of a family of Pokemons
 plotEvoLine(chain)
