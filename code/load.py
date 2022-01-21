@@ -13,6 +13,7 @@ import numpy as np
 import math
 import io
 import random
+import statistics
 
 #Extract and edit data from PokeAPI
 pokemon_url = 'https://raw.githubusercontent.com/PokeAPI/pokeapi/master/data/v2/csv/pokemon.csv'
@@ -30,10 +31,23 @@ pokemon_species = pd.read_csv(pokemon_species_url)
 pokemon_types = pd.read_csv(pokemon_types_url)
 pokemon_species_names = pd.read_csv(pokemon_species_names_url)
 pokemon_forms = pd.read_csv(pokemon_forms_url)
-pokemon_evolutions  = pd.read_csv(pokemon_evolutions_url)
+pokemon_evolutions = pd.read_csv(pokemon_evolutions_url)
 pokemon_stats = pd.read_csv(pokemon_stats_url)
 move_names = pd.read_csv(move_names_url)
 pokemon_form_names = pd.read_csv(pokemon_form_names_url)
+
+pokemon_regional = pd.read_csv('pokemon_regionals.csv')
+evolution_regional = pd.read_csv('evolution_regionals.csv')
+
+pokemon_species = pokemon_species.append(pd.DataFrame(data=pokemon_regional))
+pokemon_evolutions = pokemon_evolutions.append(pd.DataFrame(data=evolution_regional))
+
+pokemon_species.evolves_from_species_id[pokemon_species.identifier == 'perrserker'] = 10158.0
+pokemon_species.evolves_from_species_id[pokemon_species.identifier == 'sirfetchd'] = 10163.0
+pokemon_species.evolves_from_species_id[pokemon_species.identifier == 'mr-rime'] = 10165.0
+pokemon_species.evolves_from_species_id[pokemon_species.identifier == 'cursola'] = 10170.0
+pokemon_species.evolves_from_species_id[pokemon_species.identifier == 'obstagoon'] = 10172.0
+pokemon_species.evolves_from_species_id[pokemon_species.identifier == 'runerigus'] = 10176.0
 
 pokemon_species_names_esp = pokemon_species_names[pokemon_species_names["local_language_id"] == 7]
 move_names_esp = move_names[move_names["local_language_id"] == 7]
@@ -71,14 +85,22 @@ def ImageLocal(directory, size_x, size_y):
     newsize=(size_x,size_y)
     return img.resize(newsize)
 
+def find_max_list(list):
+    list_len = [len(i) for i in list]
+    return max(list_len)
 
+def expand_list(l, n):
+    l.extend([0] * (n - len(l)))
+    l = l[:n]
+    return l
 
 def plotPokemonCard(mon, form = 'default',output=''):
     id_mon = mon
     if form != 'default':
         mon=pokemon[(pokemon['species_id']==mon) & pokemon['identifier'].str.contains(form)].id.values[0]
         form_mon = pokemon_forms[pokemon_forms["pokemon_id"] == mon].id.values[0]
-
+    else:
+        form_mon = mon
     
     img =ImageURL("https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/"+str(mon)+".png",400,400)
     n_types=len(pokemon_types[pokemon_types["pokemon_id"] == mon])
@@ -181,37 +203,60 @@ def plotPokemonCard(mon, form = 'default',output=''):
         if 'gmax' in pokemon_forms[pokemon_forms["pokemon_id"].isin(pokemon[pokemon["species_id"] == mon].id.values)].form_identifier.values:
             img4=ImageURL('https://archives.bulbagarden.net/media/upload/9/9f/Dynamax_icon.png',30,23)
             im.paste(img4,(285,89), img4)
-    if form != 'default':
-        im.save(output+"pokemon_"+str(id_mon)+"-"+ str(form)+".png")
-    else:
-        im.save(output+"pokemon_"+str(id_mon)+".png")
+        im.save(output+"pokemon_"+str(mon)+".png")
 
 def generateEvoMatrix(chain):
     test = pokemon_species[pokemon_species["evolution_chain_id"] == chain]
-    nrow_evo = test.evolves_from_species_id.value_counts().max()
-    if math.isnan(nrow_evo):
-        nrow_evo=1
+
+    if math.isnan(test.evolves_from_species_id.value_counts().max()):
+        n_max_evo = 1
+    else:
+        n_max_evo = test.evolves_from_species_id.value_counts().max()
+
+    nrow_evo = n_max_evo * test.evolves_from_species_id.isna().sum()
     ncol_evo = len(test)
     matrix = np.zeros((nrow_evo,ncol_evo))
+
     if len(test[test["evolves_from_species_id"].isna()].id) == 1:
         matrix[:,0] = test[test["evolves_from_species_id"].isna()].id.values[0]
-        all_evos = test["id"].values
-        x,y =0,0
-        if len(matrix[0]) > 1:
-            for x in range(len(matrix)):
-                y=0
-                while matrix[x,y] in test.evolves_from_species_id.values:
-                    present_evos = test[test["evolves_from_species_id"] == matrix[x:,y][0]].id.values
-                    matrix[x,y+1] = np.array(list(set(present_evos) & set(all_evos)))[0]
-                    if len(test[test["evolves_from_species_id"] == present_evos[0]]) <= 1:        
-                        all_evos = all_evos[all_evos != matrix[x,y+1]]
-                    y+=1
-        matrix = matrix.astype(int)
-        evo_matrix = matrix.tolist()
-        for x in range(len(evo_matrix)):
-            evo_matrix[x] = [i for i in evo_matrix[x] if i != 0]
     else:
-        evo_matrix = [test[test["evolves_from_species_id"].isna()].id.tolist()]
+        inicial_evos = []
+        if np.isnan(test['evolves_from_species_id'].values).all():
+            inicial_evos.extend(list(test['id'].values))
+        else:
+            for i in range(test.evolves_from_species_id.isna().sum()):
+                if test[test["evolves_from_species_id"].isna()].id.values[i] in test['evolves_from_species_id'].values:
+                    inicial_evos.extend([test[test["evolves_from_species_id"].isna()].id.values[i]] * test['evolves_from_species_id'].value_counts()[test[test["evolves_from_species_id"].isna()].id.values[i]])
+                else:
+                    inicial_evos.append(test[test["evolves_from_species_id"].isna()].id.values[i])
+        for i in range(nrow_evo):
+            matrix[i][0] = inicial_evos[i]
+    
+    all_evos = test["id"].values
+    x,y =0,0
+
+    if (len(matrix[0]) > 1) & (not (np.isnan(test['evolves_from_species_id'].values).all())):
+        for x in range(len(matrix)):
+            y=0
+            while matrix[x,y] in test.evolves_from_species_id.values:
+                present_evos = test[test["evolves_from_species_id"] == matrix[x:,y][0]].id.values
+                matrix[x,y+1] = np.array(list(set(present_evos) & set(all_evos))).min()
+                if len(test[test["evolves_from_species_id"] == present_evos[0]]) <= 1:
+                    all_evos = all_evos[all_evos != matrix[x,y+1]]
+                y+=1
+
+    matrix = matrix.astype(int)
+    evo_matrix = matrix.tolist()
+
+    for x in range(len(evo_matrix)):
+        evo_matrix[x] = [i for i in evo_matrix[x] if i != 0]
+
+    final_length = find_max_list(evo_matrix)
+
+    for x in range(len(evo_matrix)):
+        expand_list(evo_matrix[x], final_length)
+    
+
     return evo_matrix
 
 
@@ -220,7 +265,10 @@ def generateEvoImages(evo_matrix):
     for x in range(len(evo_matrix)):
         y=0
         for a in evo_matrix[x]:
-            evo_image[x].append(Image.open('results/pokemon/pokemon_'+str(int(a))+'.png'))
+            if a == 0:
+                evo_image[x].append(Image.new('RGBA', (500, 675)))
+            else:
+                evo_image[x].append(Image.open('results/pokemon/pokemon_'+str(int(a))+'.png'))
             y+=1
     return evo_image
 
@@ -351,8 +399,12 @@ def generateEvoPlot(evo_matrix, evo_image, evo_text, evo_object, evo_append):
         for x in range(len(evo_matrix)):
             y = 0
             for a in evo_matrix[x]:
-                if all_same([item[y] for item in evo_matrix]):
+                aa = [item[y] for item in evo_matrix]
+                if all_same(aa):
                     im.paste(evo_image[x][y], (0+(550*y), int(675*len(evo_matrix)/2-330)))
+                elif len(aa) != len(set(aa)):
+                    z = statistics.mean([index for index, element in enumerate(aa) if element == aa[x]])
+                    im.paste(evo_image[x][y], (0+(550*y), int(0+(675*z))))
                 else:
                     im.paste(evo_image[x][y], (0+(550*y), 0+(675*x)))
                 y+=1

@@ -1,0 +1,117 @@
+id,name,position,region,rank,pokemon
+,Brock,Lider de Kanto,1,1,Onix
+,Misty,Lider de Kanto,1,1,Starmie
+,Lt. Surge,Lider de Kanto,1,1,Raichu
+,Erika,Lider de Kanto,1,1,Vileplume
+,Sachiko,Lider de Kanto,1,1,Venomoth
+,Sabrina,Lider de Kanto,1,1,Alakazam
+,Blaine,Lider de Kanto,1,1,Arcanine
+,Giovanni,Lider de Kanto,1,1,Rhyperior
+,Pegaso,Lider de Johto,2,1,Pidgeot
+,Ant—n,Lider de Johto,2,1,Scizor
+,Blanca,Lider de Johto,2,1,Miltank
+,Morti,Lider de Johto,2,1,Gengar
+,Anibal,Lider de Johto,2,1,Poliwrath
+,Yasmina,Lider de Johto,2,1,Steelix
+,Fredo,Lider de Johto,2,1,Mamoswine
+,DŽbora,Lider de Johto,2,1,Kingdra
+,Petra,Lider de Hoenn,3,1,Probopass
+,Marcial,Lider de Hoenn,3,1,Hariyama
+,Erico,Lider de Hoenn,3,1,Manectric
+,Candela,Lider de Hoenn,3,1,Torkoal
+,Norman,Lider de Hoenn,3,1,Slaking
+,Alana,Lider de Hoenn,3,1,Altaria
+,Vito,Lider de Hoenn,3,1,Solrock
+,Leti,Lider de Hoenn,3,1,Lunatone
+,Galano,Lider de Hoenn,3,1,Kingdra
+,Roco,L’der de Sinnoh,4,1,Rampardos
+,Gardenia,L’der de Sinnoh,4,1,Roserade
+,Brega,L’der de Sinnoh,4,1,Lucario
+,Mananti,L’der de Sinnoh,4,1,Floatzel
+,Fantina,L’der de Sinnoh,4,1,Drifblim
+,Acer—n,L’der de Sinnoh,4,1,Bastiodon
+,Inverna,L’der de Sinnoh,4,1,Abomasnow
+,Lectro,L’der de Sinnoh,4,1,Luxray
+,Millo,L’der de Teselia,5,1,Simisage
+,Zeo,L’der de Teselia,5,1,Simisear
+,Ma’z,L’der de Teselia,5,1,Simipour
+,Cheren,L’der de Teselia,5,1,Stoutland
+,Hiedra,L’der de Teselia,5,1,Scolipede
+,Aloe,L’der de Teselia,5,1,Watchog
+,Camus,L’der de Teselia,5,1,Leavanny
+,Camila,L’der de Teselia,5,1,Zebstrika
+,Yak—n,L’der de Teselia,5,1,Excadrill
+,Gerania,L’der de Teselia,5,1,Swanna
+,Junco,L’der de Teselia,5,1,Beartic
+,Lirio,L’der de Teselia,5,1,Haxorus
+,Cipri‡n,L’der de Teselia,5,1,Jellicent
+,Violeta,L’der de Kalos,6,1,Vivillon
+,Lino,L’der de Kalos,6,1,Tyrantrum
+,Corelia,L’der de Kalos,6,1,Hawlucha
+,Amaro,L’der de Kalos,6,1,Gogoat
+,Lem,L’der de Kalos,6,1,Heliolisk
+,Valeria,L’der de Kalos,6,1,Sylveon
+,çstrid,L’der de Kalos,6,1,Meowstic
+,ƒdel,L’der de Kalos,6,1,Avalugg
+,Liam,Capit‡n de Alola,7,1,Smeargle
+,Nereida,Capit‡n de Alola,7,1,Araquanid
+,Kiawe,Capit‡n de Alola,7,1,Marowak-alola
+,Lulœ,Capit‡n de Alola,7,1,Tsareena
+,Chris,Capit‡n de Alola,7,1,Togedemaru
+,Rika,Capit‡n de Alola,7,1,Ribombee
+,Denio,Kahuna de Alola,7,1,Persian-alola
+,Hela,Kahuna de Alola,7,1,Mudsdale
+,Percy,Lider de Galar,8,1,Eldegoss
+,Cathy,Lider de Galar,8,1,Drednaw
+,Naboru,Lider de Galar,8,1,Centiskorch
+,Judith,Lider de Galar,8,1,Machamp
+,Alistair,Lider de Galar,8,1,Gengar
+,Sally,Lider de Galar,8,1,Alcremie
+,Morris,Lider de Galar,8,1,Coalossal
+,Mel,Lider de Galar,8,1,Lapras
+,Nerio,Lider de Galar,8,1,Obstagoon
+,Roy,Lider de Galar,8,1,Duraludon
+,Berto,Lider de Galar,8,1,Hatterene
+,Dreo,Lider de Galar,8,1,Slowking-galar
+,Roxy,L’der de Galar,8,1,Morpeko
+,S—fora,L’der de Galar,8,1,Slowbro-galar
+,Lorelei,Alto Mando de Kanto,1,2,Jynx
+,Bruno,Alto Mando de Kanto,1,2,Machamp
+,Agatha,Alto Mando de Kanto,1,2,Gengar
+,Mento,Alto Mando de Johto,2,2,Xatu
+,Koga,Alto Mando de Johto,2,2,Crobat
+,Karen,Alto Mando de Johto,2,2,Houndoom
+,Sixto,Alto Mando de Hoenn,3,2,Absol
+,F‡tima,Alto Mando de Hoenn,3,2,Dusknoir
+,N’vea,Alto Mando de Hoenn,3,2,Walrein
+,Drac—n,Alto Mando de Hoenn,3,2,Salamence
+,Alecr‡n,Alto Mando de Sinnoh,4,2,Drapion
+,Gaia,Alto Mando de Sinnoh,4,2,Rhyperior
+,Fausto,Alto Mando de Sinnoh,4,2,Magmortar
+,Delos,Alto Mando de Sinnoh,4,2,Gallade
+,An’s,Alto Mando de Teselia,5,2,Chandelure
+,Aza,Alto Mando de Teselia,5,2,Bisharp
+,Lotto,Alto Mando de Teselia,5,2,Conkeldurr
+,Catleya,Alto Mando de Teselia,5,2,Gothitelle
+,Tileo,Alto Mando de Kalos,6,2,Aegislash
+,Dr‡cena,Alto Mando de Kalos,6,2,Noivern
+,Malva,Alto Mando de Kalos,6,2,Talonflame
+,Narciso,Alto Mando de Kalos,6,2,Barbaracle
+,Zarala,Alto Mando de Alola,7,2,Palossand
+,Kaudan,Alto Mando de Alola,7,2,Crabominable
+,Mayla,Alto Mando de Alola,7,2,Lycanroc
+,Kahili,Alto Mando de Alola,7,2,Toucannon
+,Lario,Alto Mando de Alola,7,2,Dugtrio-alola
+,Rojo,Campe—n de Kanto,1,3,Pikachu
+,Azul,Campe—n de Kanto,1,3,x
+,Lance,Campe—n de Johto,2,3,Dragonite
+,M‡ximo,Campe—n de Hoenn,3,3,Metagross
+,Plubio,Campe—n de Hoenn,3,3,Milotic
+,Cintia,Campeona de Sinnoh,4,3,Garchomp
+,Mirto,Campe—n de Teselia,5,3,Volcarona
+,Iris,Campeona de Teselia,5,3,Haxorus
+,Dianta,Campeona de Kalos,6,3,Gardevoir
+,Mostaz,Campe—n de Galar,8,3,Urshifu
+,Peony,Campe—n de Galar,8,3,Copperajah
+,Lionel,Campe—n de Galar,8,3,Charizard
+,Bel,Entrenadora,5,4,Musharna
